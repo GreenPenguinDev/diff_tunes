@@ -56,9 +56,9 @@ def main():
     print'\n\n'
 
     '''
-    ----------------------------------
-    FILTER MUSIC FILES, GET BASIC INFO
-    ----------------------------------
+    ---------------------------------------
+    FILTER MUSIC FILES, GET BASIC PATH INFO
+    ---------------------------------------
     '''
 
     # get music file names in directories
@@ -108,7 +108,11 @@ def main():
         music_files.extend(temp_list)
     print
 
-    #
+    '''
+    -------------------------
+    GET ALBUM/ARTIST TAG INFO
+    -------------------------
+    '''
 
     for f_info in music_files:
         (f_name, ext, d_idx, f_path) = f_info
