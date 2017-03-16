@@ -8,12 +8,12 @@ __version__ = "0.0.1"
 '''
 
 import argparse
-import mutagen
 import os
-import re
+
+import mutagen
 
 # file extensions currently supported by Google Play Music
-SUPPORTED_EXTENSIONS = ['mp3', 'm4a', 'wma', 'flac', 'ogg', 'm4p', 'm4a']
+SUPPORTED_EXTENSIONS = ['mp3', 'm4a', 'wma', 'flac', 'ogg', 'mp4']
 
 def print_w_bar(p_string, bar_chr='='):
     '''
@@ -21,6 +21,111 @@ def print_w_bar(p_string, bar_chr='='):
     '''
     bar_string = bar_chr[0] * len(p_string)
     print '{0}\n{1}'.format(p_string, bar_string)
+
+def find_music_files(d_path, d_idx):
+    '''
+    populates music_files with music file info of the format, return list of
+    such dicts, one dict per file
+        {'filename':       f_name,
+        'file_extention': ext,
+        'dir_index':      d_idx,
+        'abs_file_path':  abs_path}
+    '''
+
+
+    abs_d_path = os.path.abspath(d_path)
+    print_w_bar('CURRENT DIR: "{}":'.format(abs_d_path), '-')
+
+    # walk through files in each dir and get file info for files with SUPPORTED_EXTENSIONS
+
+    return_list = []
+    for d_path, d_names, f_names in os.walk(d_path):
+
+        # filters files by extentions and accumulates file path info dicts
+
+        filtered_f_names = [x for x in f_names if x.split('.')[-1] in SUPPORTED_EXTENSIONS]
+        for f_name in filtered_f_names:
+            ext = f_name.split('.')[-1]
+            rel_path = os.path.join(d_path, f_name)
+            abs_path = os.path.abspath(rel_path)
+            temp_dict = {
+                'filename': f_name,
+                'file_extension': ext,
+                'dir_index': d_idx,
+                'abs_file_path': abs_path
+            }
+            return_list.append(temp_dict)
+        d_idx += 1
+
+    return return_list, d_idx
+
+def append_artist_album_tags(music_files):
+    '''
+    some shit
+    '''
+
+    # maps of format key='tag display name', val='prop name of tag in raw info'
+
+    mp3_tag_map = {
+        'composer': 'TCOM',
+        'song_name': 'TIT2',
+        'artist': 'TPE1',
+        'album': 'TALB',
+        'orig_album': 'TOAL'
+    }
+
+    mp4_tag_map = {
+        'composer': '\xa9wrt',
+        'song_name': '\xa9nam',
+        'artist': '\xa9ART',
+        'album_artist': 'aART',
+        'album': '\xa9alb',
+    }
+
+    vorbis_tag_map = {
+        'song_name': 'title',
+        'artist': 'artist',
+        'performer': 'performer',
+        'album': 'album',
+    }
+
+    def get_tags(abs_path, tag_map):
+        '''
+        returns meta tags dict based on tag_map from file at abs_path
+        '''
+
+        # get raw tag data
+
+        raw_tag_data = mutagen.File(abs_path)
+
+        # populate dictionary with tag values
+
+        tag_dict = {}
+        for key, val in tag_map.iteritems():
+            tag_dict[key] = raw_tag_data.get(val)
+        return tag_dict
+
+
+    for f_info in music_files:
+
+        # unpack f_info values
+
+        ext = f_info['file_extension']
+        abs_path = f_info['abs_file_path']
+
+        # select tag map based on ext type
+
+        type_to_map = [
+            [['mp3'], mp3_tag_map],
+            [['m4a', 'mp4'], mp4_tag_map],
+            [['flac', 'ogg'], vorbis_tag_map]
+        ]
+
+        tag_map = [x[1] for x in type_to_map if ext in x[0]][0]
+        tags = get_tags(abs_path, tag_map)
+        f_info['tags'] = tags
+
+    return music_files
 
 def main():
     '''
@@ -52,8 +157,8 @@ def main():
 
         if not d_bool:
             print '"{0}" is not a directory! skipping "{0}"...'.format(dirs.pop(i))
-    print 'DONE!'
-    print'\n\n'
+
+    print 'DONE!\n'
 
     '''
     ---------------------------------------
@@ -61,51 +166,19 @@ def main():
     ---------------------------------------
     '''
 
-    # get music file names in directories
-
-    def filter_by_filetype(f_name):
-        '''
-        filters file name (f_name) by extention in SUPPORTED_EXTENSIONS
-        '''
-        split_name = re.split(r'^[\w,\s-]*\.', f_name)
-        ext = split_name[1] if len(split_name) == 2 else None
-        return ext in SUPPORTED_EXTENSIONS
+    # get music file info dicts from each dir in dirs
 
     print 'FINDING MUSIC FILES\n{}'.format('=' * 20)
-
-    # populates music_files with music file info of the format
-    # {'filename':       f_name,
-    #  'file_extention': ext,
-    #  'dir_index':      d_idx,
-    #  'abs_file_path':  abs_path}
-
     music_files = []
     d_idx = 0
-    for d in dirs:
-        abs_d_path = os.path.abspath(d)
-        print_w_bar('CURRENT DIR: "{}":'.format(abs_d_path), '-')
-
-        # walk through files in each dir and get file info for files with SUPPORTED_EXTENSIONS
-
-        temp_list = []
-        for d_path, d_names, f_names in os.walk(d):
-
-            # accumulates file info dicts
-
-            filtered_f_names = filter(filter_by_filetype, f_names)
-            for f_name in filtered_f_names:
-                ext = re.split(r'^[\w,\s-]*\.', f_name)[1]
-                rel_path = os.path.join(d_path, f_name)
-                abs_path = os.path.abspath(rel_path)
-                temp_dict = {'filename': f_name, 'file_extension': ext, 'dir_index': d_idx, 'abs_file_path': abs_path}
-                temp_list.append(temp_dict)
-            d_idx += 1
+    for d_path in dirs:
+        return_list, d_idx = find_music_files(d_path, d_idx)
 
         # add file info dicts from this dir to music_files
 
-        n_files = len(temp_list)
-        print '{} FILES FOUND\n'.format(n_files)
-        music_files.extend(temp_list)
+        music_files.extend(return_list)
+        print '{} FILES FOUND'.format(len(return_list))
+
     print
 
     '''
@@ -114,18 +187,15 @@ def main():
     -------------------------
     '''
 
-    for f_info in music_files:
-        (f_name, ext, d_idx, f_path) = f_info
-        print d_idx
-        print f_name
-        print ext
-        try:
-            print mutagen.File(f_path)['TPE1']
-        except:
-            try:
-                print mutagen.File(f_path)['\xa9ART']
-            except:
-                print mutagen.File(f_path)['artist']
+    # add album, artist, and other tags to music_files dict
+
+    print 'GETTING TAGS\n{}'.format('=' * 20)
+    music_files = append_artist_album_tags(music_files)
+    print
+
+
+
+
 
 
 if __name__ == '__main__':
@@ -133,8 +203,7 @@ if __name__ == '__main__':
 
 '''
 to do:
-    keep string types or translate non-lossy to unicode for id tags
-    figure out file type to tag procurement mapping for [artist, album]
+    
     for artist/album, deal with multiple tags mapping to each (use d_idx if neccesary, in artist[0] or intersect)
     clean up temp list extend
     add 
