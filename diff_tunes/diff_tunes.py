@@ -1,6 +1,11 @@
-'''
-somthing
-'''
+"""Compares Google Play Music vs music files in local folder(s).
+
+generates diff for music files in dirs provided as args compared to tracks
+currently uploaded to Google Music Play. Allows for deleting files that have
+already been uploaded.
+
+"""
+
 __author__ = "Arjun Ray"
 __email__ = "deconstructionalism@gmail.com"
 __license__ = "GNU GPLv3"
@@ -24,17 +29,13 @@ from music_file_utils import find_music_files, append_artist_album_tags
 SUPPORTED_EXTENSIONS = ['mp3', 'm4a', 'wmapre', 'flac', 'ogg', 'mp4']
 
 def main():
-    '''
-    generates diff for music files in dirs provided as args compared to tracks
-    currently uploaded to Google Music Play. Allows for deleting files that have
-    already been uploaded.
-    '''
+    """Generate diffs, allow option to delete already uploaded files.
 
-    '''
-    -----------------------------
-    CHECK/PARSE COMMAND LINE ARGS
-    -----------------------------
-    '''
+    """
+
+    # -----------------------------
+    # CHECK/PARSE COMMAND LINE ARGS
+    # -----------------------------
 
     # parse args
 
@@ -56,11 +57,10 @@ def main():
 
     print 'DONE!\n'
 
-    '''
-    ----------------------------------------
-    AUTHENTICATE AND LOGIN TO GOOGLE ACCOUNT
-    ----------------------------------------
-    '''
+
+    # ----------------------------------------
+    # AUTHENTICATE AND LOGIN TO GOOGLE ACCOUNT
+    # ----------------------------------------
 
     # authenticate
 
@@ -81,11 +81,9 @@ def main():
         else:
             print 'LOGGED IN!\n'
 
-    '''
-    ---------------------------------------
-    FILTER MUSIC FILES, GET BASIC PATH INFO
-    ---------------------------------------
-    '''
+    # ---------------------------------------
+    # FILTER MUSIC FILES, GET BASIC PATH INFO
+    # ---------------------------------------
 
     # get music file info dicts from each d_path in dirs
 
@@ -107,11 +105,11 @@ def main():
 
     print
 
-    '''
-    -------------------------
-    GET ALBUM/ARTIST TAG INFO
-    -------------------------
-    '''
+
+    # -------------------------
+    # GET ALBUM/ARTIST TAG INFO
+    # -------------------------
+
 
     # add album, artist, and other tags to music_files dict
 
@@ -119,11 +117,9 @@ def main():
     music_files = append_artist_album_tags(music_files)
     print 'DONE!\n'
 
-    '''
-    --------
-    RUN DIFF
-    --------
-    '''
+    # --------
+    # RUN DIFF
+    # --------
 
     # get a full song info list from Google Play Music
     # THIS IS STILL REALLY UGLY, FIX!
@@ -160,7 +156,7 @@ def main():
 if __name__ == '__main__':
     main()
 
-'''
+"""
 to do:
     make autheticate function pure and less messy output too
     for artist/album, deal with multiple tags mapping to each (use d_idx if neccesary, in artist[0] or intersect)
@@ -172,4 +168,4 @@ to do:
         duplicates should be compared by track length and track num
             duplicates should be compared by length, suggesting longer tracks possibly correct 
         
-'''
+"""
