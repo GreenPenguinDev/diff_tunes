@@ -1,6 +1,5 @@
 language: python
 python:
-  - "2.6"
-  - "2.7"
+  - "2.7.12"
 install: "pip install -r requirements.txt"
 script: "python diff_tunes/diff_tunes.py -h"
